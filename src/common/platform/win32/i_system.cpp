@@ -100,6 +100,7 @@
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void DestroyCustomCursor();
+bool isConsoleApp();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
