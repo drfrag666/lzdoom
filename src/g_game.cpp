@@ -318,7 +318,7 @@ CCMD (slot)
 			// Needs to be redone
 			IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickWeapon)
 			{
-				SendItemUse = VMCallSingle<AActor *>(func, mo, slot, (int)!(dmflags2 & DF2_DONTCHECKAMMO));
+				SendItemUse = CallVM<AActor *>(func, mo, slot, (int)!(dmflags2 & DF2_DONTCHECKAMMO));
 			}
 		}
 
@@ -374,7 +374,7 @@ CCMD (weapnext)
 		// Needs to be redone
 		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickNextWeapon)
 		{
-			SendItemUse = VMCallSingle<AActor *>(func, mo);
+			SendItemUse = CallVM<AActor *>(func, mo);
 		}
 	}
 
@@ -399,7 +399,7 @@ CCMD (weapprev)
 		// Needs to be redone
 		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickPrevWeapon)
 		{
-			SendItemUse = VMCallSingle<AActor *>(func, mo);
+			SendItemUse = CallVM<AActor *>(func, mo);
 		}
 	}
 
@@ -438,7 +438,7 @@ CCMD (invnext)
 	{
 		IFVM(PlayerPawn, InvNext)
 		{
-			VMCallVoid<AActor *>(func, players[consoleplayer].mo);
+			CallVM<void>(func, players[consoleplayer].mo);
 		}
 	}
 }
@@ -449,7 +449,7 @@ CCMD(invprev)
 	{
 		IFVM(PlayerPawn, InvPrev)
 		{
-			VMCallVoid<AActor *>(func, players[consoleplayer].mo);
+			CallVM<void>(func, players[consoleplayer].mo);
 		}
 	}
 }
@@ -524,7 +524,7 @@ CCMD (useflechette)
 	if (players[consoleplayer].mo == nullptr) return;
 	IFVIRTUALPTRNAME(players[consoleplayer].mo, NAME_PlayerPawn, GetFlechetteItem)
 	{
-		AActor * cls = VMCallSingle<AActor *>(func, players[consoleplayer].mo);
+		AActor * cls = CallVM<AActor *>(func, players[consoleplayer].mo);
 
 		if (cls != nullptr) SendItemUse = cls;
 	}
@@ -1291,7 +1291,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 {
 	IFVM(PlayerPawn, PlayerFinishLevel)
 	{
-		VMCallVoid(func, players[player].mo, (int)mode, flags);
+		CallVM<void>(func, players[player].mo, (int)mode, flags);
 	}
 }
 
@@ -1364,7 +1364,7 @@ void FLevelLocals::PlayerReborn (int player)
 
 		IFVIRTUALPTRNAME(actor, NAME_PlayerPawn, GiveDefaultInventory)
 		{
-			VMCallVoid(func, actor);
+			CallVM<void>(func, actor);
 		}
 		p->ReadyWeapon = p->PendingWeapon;
 	}
