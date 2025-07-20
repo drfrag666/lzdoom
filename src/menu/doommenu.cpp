@@ -480,7 +480,7 @@ CCMD (quicksave)
 	doquicksave = true;
 
 	// If the quick save rotation is enabled, it handles the save slot.
-	if (quicksaverotation)
+	if (!netgame && quicksaverotation)
 	{
 		G_DoQuickSave();
 		return;

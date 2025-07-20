@@ -127,7 +127,8 @@ CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_restartondeath, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
-EXTERN_CVAR(Bool, net_disablepause)
+EXTERN_CVAR(Int, net_disablepause)
+EXTERN_CVAR(Bool, net_limitsaves)
 
 //==========================================================================
 //
@@ -247,7 +248,7 @@ CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
 #endif // _M_X64 && _MSC_VER < 1910
 
 // [RH] Allow turbo setting anytime during game
-CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
+CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL | CVAR_CHEAT)
 {
 	if (self < 10.f)
 	{
@@ -352,10 +353,18 @@ CCMD (land)
 
 CCMD (pause)
 {
-	if (netgame && !players[consoleplayer].settings_controller && net_disablepause)
+	if (netgame)
 	{
-		Printf("Only settings controllers can currently (un)pause the game\n");
-		return;
+		if (net_disablepause == 2 && (!paused || !players[consoleplayer].settings_controller))
+		{
+			Printf("Pausing the game is currently disabled\n");
+			return;
+		}
+		else if (net_disablepause == 1 && !players[consoleplayer].settings_controller)
+		{
+			Printf("Only settings controllers can currently (un)pause the game\n");
+			return;
+		}
 	}
 
 	sendpause = true;
@@ -1105,6 +1114,37 @@ static void G_FullConsole()
 
 }
 
+void D_RunCutscene()
+{
+	// Only single player games can cancel out of the screen job via client-side logic.
+	if (ScreenJobTick() && !demoplayback)
+	{
+		if (netgame)
+		{
+			// Only the host can determine this.
+			if (consoleplayer != Net_Arbitrator)
+				return;
+
+			int type = ST_VOTE;
+			IFVM(ScreenJobRunner, GetSkipType)
+				type = VMCallSingle<int>(func, cutscene.runner);
+
+			if (type != ST_UNSKIPPABLE)
+				return;
+		}
+
+		Net_WriteInt8(DEM_ENDSCREENJOB);
+	}
+}
+
+// This is used to allow the server to check for when players are ready to advance. For singleplayer we can just
+// use the net message from the cutscene finishing to know when to go.
+static void D_CheckCutsceneAdvance()
+{
+	if (netgame && !demoplayback && Net_CheckCutsceneReady())
+		Net_AdvanceCutscene();
+}
+
 //
 // G_Ticker
 // Make ticcmd_ts for the players.
@@ -1207,7 +1247,7 @@ void G_Ticker ()
 		C_AdjustBottom ();
 	}
 
-	// get commands, check consistancy, and build new consistancy check
+	// get commands
 	const int curTic = gametic / TicDup;
 
 	//Added by MC: For some of that bot stuff. The main bot function.
@@ -1223,9 +1263,6 @@ void G_Ticker ()
 			G_WriteDemoTiccmd(nextCmd, client, curTic);
 
 		players[client].oldbuttons = cmd->buttons;
-		// If the user alt-tabbed away, paused gets set to -1. In this case,
-		// we do not want to read more demo commands until paused is no
-		// longer negative.
 		if (demoplayback)
 			G_ReadDemoTiccmd(cmd, client);
 		else
@@ -1263,11 +1300,7 @@ void G_Ticker ()
 
 	case GS_CUTSCENE:
 	case GS_INTRO:
-		if (ScreenJobTick())
-		{
-			// synchronize termination with the playsim.
-			Net_WriteInt8(DEM_ENDSCREENJOB);
-		}
+		D_CheckCutsceneAdvance();
 		break;
 
 	default:
@@ -2138,6 +2171,10 @@ void G_SaveGame (const char *filename, const char *description)
     {
 		Printf ("%s\n", GStrings.GetString("TXT_SPPLAYERDEAD"));
     }
+	else if (netgame && net_limitsaves && !players[consoleplayer].settings_controller)
+	{
+		Printf("Only settings controllers can save the game\n");
+	}
 	else
 	{
 		savegamefile = filename;
@@ -2173,6 +2210,10 @@ CUSTOM_CVAR (Int, quicksaverotationcount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void G_DoAutoSave ()
 {
+	// Never autosave in netgames since you can't load this properly anyway.
+	if (netgame)
+		return;
+
 	FString description;
 	FString file;
 	// Keep up to four autosaves at a time
@@ -2208,6 +2249,10 @@ void G_DoAutoSave ()
 
 void G_DoQuickSave ()
 {
+	// Never quicksave in netgames since you can't load this properly anyway.
+	if (netgame)
+		return;
+
 	FString description;
 	FString file;
 	// Keeps a rotating set of quicksaves
@@ -2602,7 +2647,7 @@ void G_BeginRecording (const char *startmap)
 			WriteInt8((uint8_t)i, &demo_p);
 			auto str = D_GetUserInfoStrings(i);
 			memcpy(demo_p, str.GetChars(), str.Len() + 1);
-			demo_p += str.Len();
+			demo_p += str.Len() + 1;
 			FinishChunk(&demo_p);
 		}
 	}
@@ -3054,7 +3099,7 @@ void G_StartSlideshow(FLevelLocals *Level, FName whichone, int state)
 {
 	auto SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
 	auto slide = F_StartIntermission(SelectedSlideshow, state);
-	RunIntermission(nullptr, nullptr, slide, nullptr, [](bool)
+	RunIntermission(nullptr, nullptr, slide, nullptr, false, [](bool)
 	{
 		primaryLevel->SetMusic();
 		gamestate = GS_LEVEL;

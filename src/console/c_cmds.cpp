@@ -715,7 +715,7 @@ UNSAFE_CCMD(save)
 		Printf("saving to an absolute path is not allowed\n");
 		return;
 	}
-	if (fname.IndexOf("..") > 0)
+	if (fname.IndexOf("..") >= 0)
 	{
 		Printf("'..' not allowed in file names\n");
 		return;

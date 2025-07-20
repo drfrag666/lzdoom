@@ -2468,9 +2468,29 @@ OptionMenu NetworkOptions protected
 	StaticText " "
 	StaticText "$NETMNU_HOSTOPTIONS", 1
 	Option "$NETMNU_EXTRATICS",				"net_extratic", "OnOff"
-	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "OnOff"
-	NumberField "$NETMNU_CHATSLOMO",		"net_chatslowmode", 0, 300, 5
+	Option "$NETMNU_BALANCETICS",			"net_ticbalance", "OnOff"
+	Option "$NETMNU_LIMITCONVO",			"net_limitconversations", "OnOff"
+	Option "$NETMNU_REPEATCOOLDOWN",		"net_repeatableactioncooldown", "OnOff"
+	Option "$NETMNU_DISABLEPAUSE",			"net_disablepause", "PauseTypes"
+	Option "$NETMNU_READYTYPE",				"net_cutscenereadytype", "ReadyTypes"
+	Slider "$NETMNU_READYPERCENT",			"net_cutscenereadypercent", "0", "1", "0.05", 2
+	Slider "$NETMNU_READYCOUNTDOWN",		"net_cutscenecountdown", 0, 300, 5
+	Slider "$NETMNU_CHATSLOMO",				"net_chatslowmode", 0, 300, 5
 
+}
+
+OptionValue "PauseTypes"
+{
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_HOSTONLY"
+	2, "$OPTVAL_ON"
+}
+
+OptionValue "ReadyTypes"
+{
+	0, "$OPTVAL_VOTE"
+	1, "$OPTVAL_ANYONE"
+	2, "$OPTVAL_HOSTONLY"
 }
 
 OptionValue "ChatTypes"
