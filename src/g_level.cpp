@@ -1552,6 +1552,10 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	{
 		I_Error("no start for player %d found.", pnumerr);
 	}
+
+	// If loading in from existing data, allow things to reinitialize if needed.
+	if (FromSnapshot || savegamerestore)
+		Thinkers.OnLoad();
 }
 
 
@@ -1656,6 +1660,9 @@ void FLevelLocals::StartTravel ()
 					inv->UnlinkFromWorld (nullptr);
 					inv->UnlinkBehaviorsFromLevel();
 					inv->DeleteAttachedLights();
+					tid = inv->tid;
+					inv->SetTID(0);
+					inv->tid = tid;
 				}
 			}
 		}
@@ -1761,7 +1768,7 @@ int FLevelLocals::FinishTravel ()
 		pawn->LinkBehaviorsToLevel();
 		pawn->ClearInterpolation();
 		pawn->ClearFOVInterpolation();
-		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
+		int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
 		pawn->tid = 0;				// Reset TID
 		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
 		pawn->SetState(pawn->SpawnState);
@@ -1773,6 +1780,9 @@ int FLevelLocals::FinishTravel ()
 			inv->LinkToWorld (nullptr);
 			P_FindFloorCeiling(inv, FFCF_ONLYSPAWNPOS);
 			inv->LinkBehaviorsToLevel();
+			tid = inv->tid;
+			inv->tid = 0;
+			inv->SetTID(tid);
 
 			IFVIRTUALPTRNAME(inv, NAME_Inventory, Travelled)
 			{

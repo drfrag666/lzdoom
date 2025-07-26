@@ -148,6 +148,8 @@ const char *KeyNames[NUM_KEYS] =
 	"Pad_Start","Pad_Back","LThumb","RThumb",
 	"LShoulder","RShoulder","LTrigger","RTrigger",
 	"Pad_A", "Pad_B", "Pad_X", "Pad_Y",
+	"Paddle_1", "Paddle_2", "Paddle_3", "Paddle_4",
+	"Guide", "Pad_Misc", "Pad_Touchpad",
 
 	"POV21Up",	"POV21Right","POV21Down",	"POV21Left",		// First POV hat
 	"POV22Up",	"POV22Right","POV22Down",	"POV22Left",		// Second POV hat

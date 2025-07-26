@@ -690,7 +690,7 @@ bool M_Responder (event_t *ev)
 		else if (menuactive != MENU_WaitKey && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 		{
 			// eat blocked controller events without dispatching them.
-			if (ev->data1 >= KEY_FIRSTJOYBUTTON && m_blockcontrollers) return true;
+			if (ev->data1 >= KEY_FIRSTJOYBUTTON && m_blockcontrollers && ev->type == EV_KeyDown) return true;
 
 			keyup = ev->type == EV_KeyUp;
 
@@ -784,7 +784,7 @@ bool M_Responder (event_t *ev)
 			if (ev->data1 == KEY_ESCAPE)
 			{
 				M_StartControlPanel(true);
-				M_SetMenu(NAME_Mainmenu, -1);
+				M_SetMenu(NAME_MainMenu, -1);
 				return true;
 			}
 			return false;
@@ -793,7 +793,7 @@ bool M_Responder (event_t *ev)
 				 ConsoleState != c_down && gamestate != GS_LEVEL && m_use_mouse)
 		{
 			M_StartControlPanel(true);
-			M_SetMenu(NAME_Mainmenu, -1);
+			M_SetMenu(NAME_MainMenu, -1);
 			return true;
 		}
 	}
