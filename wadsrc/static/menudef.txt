@@ -2355,12 +2355,12 @@ OptionValue Ratios
 OptionValue ScaleModes
 {
 	0, "$OPTVAL_NATIVE"
+	6, "$OPTVAL_HALF"
 	2, "320x200"
 	3, "640x400"
 	4, "1280x800"
 	5, "$OPTVAL_CUSTOM"
 	1, "$OPTVAL_LOWEST"
-	6, "$OPTVAL_HALF"
 	7, "$OPTVAL_LOWEST12"
 }
 OptionValue CropAspect
