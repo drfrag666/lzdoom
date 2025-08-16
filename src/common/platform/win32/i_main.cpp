@@ -285,7 +285,7 @@ int DoMain (HINSTANCE hInstance)
 			}
 			else if (StdOut == nullptr)
 			{
-				mainwindow.ShowErrorPane(nullptr);
+				mainwindow.ShowErrorPane("");
 			}
 		}
 	}

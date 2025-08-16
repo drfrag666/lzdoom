@@ -400,7 +400,7 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 		PClassActor *type = PClass::FindActor(RedirectType);
 		if (type != NULL)
 		{
-			for (int i = 0; i < MAXPLAYERS; ++i)
+			for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 			{
 				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
@@ -422,7 +422,7 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 			if (var->GetFlags() & CVAR_USERINFO)
 			{
 				// user sync'd cvar, check for all players
-				for (int i = 0; i < MAXPLAYERS; ++i)
+				for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 				{
 					if (playeringame[i] && (var = GetCVar(i, RedirectCVAR.GetChars())))
 					{

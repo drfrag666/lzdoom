@@ -455,7 +455,7 @@ UNSAFE_CCMD (open)
 
 void G_NewInit ()
 {
-	int i;
+	unsigned int i;
 
 	// Destory all old player refrences that may still exist
 	TThinkerIterator<AActor> it(primaryLevel, NAME_PlayerPawn, STAT_TRAVELLING, false);
@@ -537,7 +537,7 @@ static void InitPlayerClasses ()
 {
 	if (!savegamerestore)
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			SinglePlayerClass[i] = players[i].userinfo.GetPlayerClassNum();
 			if (SinglePlayerClass[i] < 0 || !playeringame[i])
@@ -558,7 +558,7 @@ static void InitPlayerClasses ()
 void G_InitNew (const char *mapname, bool bTitleLevel)
 {
 	bool wantFast;
-	int i;
+	unsigned int i;
 
 	// did we have any level before?
 	if (primaryLevel->info != nullptr)
@@ -823,7 +823,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		D_DrawIcon = "TELEICON";
 	}
 
-	for(int i = 0; i < MAXPLAYERS; i++)
+	for(unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (PlayerInGame(i))
 		{
@@ -1158,7 +1158,7 @@ void G_DoCompleted (void)
 
 bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 {
-	int i;
+	unsigned int i;
 
 	// [RH] Mark this level as having been visited
 	if (!(flags & LEVEL_CHANGEMAPCHEAT))
@@ -1383,7 +1383,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame)
 {
 	MapName = nextmapname;
-	int i;
+	unsigned int i;
 
 	if (NextSkill >= 0)
 	{
@@ -1496,7 +1496,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 
 	if (!FromSnapshot)
 	{
-		for (int i = 0; i<MAXPLAYERS; i++)
+		for (unsigned int i = 0; i < MAXPLAYERS; i++)
 		{
 			if (PlayerInGame(i) && Players[i]->mo != nullptr)
 				P_PlayerStartStomp(Players[i]->mo, !deathmatch);
@@ -1504,7 +1504,7 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	}
 
 	// For each player, if they are viewing through a player, make sure it is themselves.
-	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	for (unsigned int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
 		if (PlayerInGame(ii))
 		{
@@ -1635,7 +1635,7 @@ void FLevelLocals::StartTravel ()
 	if (deathmatch)
 		return;
 
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
@@ -1823,7 +1823,7 @@ FLevelLocals::FLevelLocals() : Behaviors(this), tagManager(this)
 {
 	// Make sure that these point to the right data all the time.
 	// This will be needed for as long as it takes to completely separate global UI state from per-level play state.
-	for (int i = 0; i < MAXPLAYERS; i++)
+	for (unsigned int i = 0; i < MAXPLAYERS; i++)
 	{
 		Players[i] = &players[i];
 	}
@@ -2038,7 +2038,7 @@ void G_WriteVisited(FSerializer &arc)
 
 	if (arc.BeginObject("playerclasses"))
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
 			{
@@ -2112,7 +2112,7 @@ void G_ReadVisited(FSerializer &arc)
 
 	if (arc.BeginObject("playerclasses"))
 	{
-		for (int i = 0; i < MAXPLAYERS; ++i)
+		for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 		{
 			FStringf key("%d", i);
 			arc(key.GetChars(), players[i].cls);

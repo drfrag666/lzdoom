@@ -66,6 +66,7 @@
 #include "g_input.h"
 #include "c_commandbuffer.h"
 #include "vm.h"
+#include "common/scripting/dap/GameEventEmit.h"
 
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
@@ -427,7 +428,7 @@ int PrintString (int iprintlevel, const char *outline)
 	{
 		return 0;
 	}
-	if (printlevel != PRINT_LOG || Logfile != nullptr)
+	if (printlevel != PRINT_LOG || !(iprintlevel & PRINT_NODAPEVENT) || Logfile != nullptr)
 	{
 		// Convert everything coming through here to UTF-8 so that all console text is in a consistent format
 		int count;
@@ -449,6 +450,10 @@ int PrintString (int iprintlevel, const char *outline)
 		if (Logfile != nullptr && !(iprintlevel & PRINT_NOLOG))
 		{
 			WriteLineToLog(Logfile, outline);
+		}
+		if (!(iprintlevel & PRINT_NODAPEVENT))
+		{
+			DebugServer::RuntimeEvents::EmitLogEvent(iprintlevel, outline);
 		}
 		return count;
 	}

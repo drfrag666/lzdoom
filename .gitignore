@@ -47,3 +47,4 @@ fmodapi*linux/
 /src/gl/unused
 /mapfiles_release/*.map
 /AppDir
+.cache/

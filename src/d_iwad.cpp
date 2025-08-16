@@ -59,7 +59,7 @@ EXTERN_CVAR(Bool, autoloadbrightmaps)
 EXTERN_CVAR(Bool, autoloadwidescreen)
 EXTERN_CVAR(String, language)
 
-CVAR(Int, i_loadsupportwad, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // 0=never, 1=singleplayer only, 2=always
+CVAR(Bool, i_loadsupportwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // Disabled in net games.
 
 //==========================================================================
 //
@@ -783,6 +783,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 			if (autoloadlights) flags |= 2;
 			if (autoloadbrightmaps) flags |= 4;
 			if (autoloadwidescreen) flags |= 8;
+			if (i_loadsupportwad) flags |= 16;
 
 			pick = I_PickIWad(&wads[0], (int)wads.Size(), queryiwad, pick, flags);
 			if (pick >= 0)
@@ -827,9 +828,9 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 
 	if(info.SupportWAD.IsNotEmpty())
 	{
-		bool wantsnetgame = (Args->CheckParm("-join") || Args->CheckParm("-host"));
-
-		if ((!wantsnetgame && i_loadsupportwad == 1) || (i_loadsupportwad == 2))
+		// For net games all wads must be explicitly named to make it easier for the host to know
+		// exactly what's being loaded.
+		if (i_loadsupportwad && !Args->CheckParm("-join") && !Args->CheckParm("-host"))
 		{
 			FString supportWAD = IWADPathFileSearch(info.SupportWAD);
 

@@ -399,6 +399,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("devthreshold", DefThreshold)
 		A("spriteangle", SpriteAngle)
 		A("spriterotation", SpriteRotation)
+		A("angledrolloffset", AngledRollOffset)
 		("alternative", alternative)
 		A("thrubits", ThruBits)
 		A("cameraheight", CameraHeight)
@@ -6031,7 +6032,7 @@ void PlayerPointerSubstitution(AActor* oldPlayer, AActor* newPlayer, bool remove
 	}
 
 	// Go through player infos.
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (!oldPlayer->Level->PlayerInGame(i))
 			continue;
@@ -6152,7 +6153,7 @@ int MorphPointerSubstitution(AActor* from, AActor* to)
 	to->MoveBehaviors(*from);
 
 	// Go through player infos.
-	for (int i = 0; i < MAXPLAYERS; ++i)
+	for (unsigned int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (!from->Level->PlayerInGame(i))
 			continue;
@@ -6388,7 +6389,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 		VMCall(func, params, 2, rets, 1);
 	}
 
-	for (int ii = 0; ii < MAXPLAYERS; ++ii)
+	for (unsigned int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
 		if (PlayerInGame(ii) && Players[ii]->camera == oldactor)
 		{
@@ -6776,7 +6777,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 		else if (!deathmatch)
 		{ // Cooperative
 			mask = 0;
-			for (int i = 0; i < MAXPLAYERS; i++)
+			for (unsigned int i = 0; i < MAXPLAYERS; i++)
 			{
 				if (PlayerInGame(i))
 				{

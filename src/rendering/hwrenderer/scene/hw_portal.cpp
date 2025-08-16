@@ -236,11 +236,11 @@ void HWPortal::DrawPortalStencil(FRenderState &state, int pass)
 
 		if (mBottomCap != ~0u)
 		{
-			state.Draw(DT_TriangleStrip, mBottomCap, 4, false);
+			state.Draw(DT_TriangleStrip, mBottomCap, 4, screen->IsVulkan());
 		}
 		if (mTopCap != ~0u)
 		{
-			state.Draw(DT_TriangleStrip, mTopCap, 4, false);
+			state.Draw(DT_TriangleStrip, mTopCap, 4, screen->IsVulkan());
 		}
 
 		if (pass == STP_DepthRestore) state.SetDepthRange(0, 1);
@@ -920,7 +920,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, FRenderState &rstate, Clipper *c
 
 void HWPlaneMirrorPortal::DrawPortalStencil(FRenderState &state, int pass)
 {
-	if (mState->vpIsAllowedOoB)
+	if (true) // mState->vpIsAllowedOoB)
 	{
 		bool isceiling = planesused & (1 << sector_t::ceiling);
 		for (unsigned int i = 0; i < lines.Size(); i++)
