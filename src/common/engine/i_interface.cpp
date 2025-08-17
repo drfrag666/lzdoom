@@ -5,6 +5,7 @@
 #include "c_cvars.h"
 #include "gstrings.h"
 #include "v_font.h"
+#include "m_random.h"
 
 EXTERN_CVAR(Int, vid_scalemode)
 EXTERN_CVAR(Float, vid_scalefactor)
@@ -68,3 +69,12 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 	if (sysCallbacks.LanguageChanged) sysCallbacks.LanguageChanged(self);
 }
 
+FString GameUUID;
+static FRandom pr_uuid("GameUUID");
+
+FString GenerateUUID()
+{
+	FString uuid;
+	uuid.AppendFormat("%08X-%04X-4%03X-9%03X-%08X%04X", pr_uuid.GenRand32(), pr_uuid(UINT16_MAX), pr_uuid(4095), pr_uuid(4095), pr_uuid.GenRand32(), pr_uuid(UINT16_MAX));
+	return uuid;
+}

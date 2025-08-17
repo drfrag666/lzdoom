@@ -264,7 +264,7 @@ struct MusPlayingInfo native
 	native String name;
 	native int baseorder;
 	native bool loop;
-	native voidptr handle;
+	native readonly voidptr handle;
 	
 };
 
@@ -988,7 +988,7 @@ struct QuatStruct native unsafe(internal)
 
 struct ScriptSavedPos
 {
-	voidptr SavedScriptPtr;
+	readonly voidptr SavedScriptPtr;
 	int SavedScriptLine;
 }
 

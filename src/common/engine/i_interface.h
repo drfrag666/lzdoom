@@ -12,6 +12,9 @@ enum EUpscaleFlags : int;
 class FConfigFile;
 struct FTranslationID;
 
+extern FString GameUUID;
+FString GenerateUUID();
+
 struct SystemCallbacks
 {
 	bool (*G_Responder)(event_t* ev);	// this MUST be set, otherwise nothing will work

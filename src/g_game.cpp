@@ -1197,6 +1197,13 @@ void G_Ticker ()
 			savegamefile = "";
 			savedescription = "";
 			break;
+		case ga_quicksave:
+			doquicksave = true;
+			G_DoSaveGame(doquicksave, true, savegamefile, savedescription.GetChars());
+			gameaction = ga_nothing;
+			savegamefile = "";
+			savedescription = "";
+			break;
 		case ga_autosave:
 			doquicksave = false;
 			G_DoAutoSave ();
@@ -2015,6 +2022,7 @@ void G_DoLoadGame ()
 	arc("Save Version", SaveVersion);
 	arc("Engine", engine);
 	arc("Current Map", map);
+	arc("GameUUID", GameUUID);
 
 	if (engine.CompareNoCase(GAMESIG) != 0 && engine.CompareNoCase("GZDOOM") != 0)
 	{
@@ -2153,9 +2161,9 @@ void G_DoLoadGame ()
 // Called by the menu task.
 // Description is a 24 byte text string
 //
-void G_SaveGame (const char *filename, const char *description)
+void G_SaveGame (const char *filename, const char *description, bool quick)
 {
-	if (sendsave || gameaction == ga_savegame)
+	if (sendsave || gameaction == ga_savegame || gameaction == ga_quicksave)
 	{
 		Printf ("%s\n", GStrings.GetString("TXT_SAVEPENDING"));
 	}
@@ -2179,7 +2187,17 @@ void G_SaveGame (const char *filename, const char *description)
 	{
 		savegamefile = filename;
 		savedescription = description;
-		sendsave = true;
+		if (quick)
+		{
+			sendsave = false;
+			gameaction = ga_quicksave;
+		}
+		else
+		{
+			sendsave = true;
+			if (gameaction == ga_quicksave)
+				gameaction = ga_nothing;
+		}
 	}
 }
 
@@ -2276,7 +2294,7 @@ void G_DoQuickSave ()
 
 	readableTime = myasctime ();
 	description.Format("Quicksave %s", readableTime);
-	G_DoSaveGame (doquicksave, true, file, description.GetChars());
+	G_SaveGame(file.GetChars(), description.GetChars(), true);
 }
 
 
@@ -2395,6 +2413,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	savegameinfo.AddString("Software", buf)
 		.AddString("Engine", GAMESIG)
 		("Save Version", ver)
+		("GameUUID", GameUUID)
 		.AddString("Title", description)
 		.AddString("Current Map", primaryLevel->MapName.GetChars());
 

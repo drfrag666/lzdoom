@@ -1151,6 +1151,12 @@ enum EGameAction
 	ga_screenshot,
 	ga_togglemap,
 	ga_fullconsole,
+	ga_resumeconversation,
+	ga_intro,
+	ga_intermission,
+	ga_titleloop,
+	ga_mapwarp,
+	ga_quicksave,
 };
 
 enum EPuffFlags
