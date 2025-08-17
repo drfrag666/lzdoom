@@ -735,6 +735,7 @@ CVAR (Flag, compat_stayonlift,			compatflags2, COMPATF2_STAYONLIFT);
 CVAR (Flag, compat_nombf21,				compatflags2, COMPATF2_NOMBF21);
 CVAR (Flag, compat_voodoozombies,		compatflags2, COMPATF2_VOODOO_ZOMBIES);
 CVAR (Flag, compat_fdteleport,			compatflags2, COMPATF2_FDTELEPORT);
+CVAR (Flag, compat_novdolllockmsg,		compatflags2, COMPATF2_NOVDOLLLOCKMSG);
 CVAR (Flag, compat_oldrandom,			compatflags2, COMPATF2_OLD_RANDOM_GENERATOR);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -1918,7 +1919,8 @@ static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, co
 		{
 			sc.MustGetString();
 			GameStartupInfo.SteamAppId = sc.String;
-		}		else
+		}
+		else
 		{
 			// Silently ignore unknown properties
 			do
@@ -1992,7 +1994,7 @@ static void D_DoomInit()
 	Args->CollectFiles("-bex", ".bex");
 	Args->CollectFiles("-exec", ".cfg");
 	Args->CollectFiles("-playdemo", ".lmp");
-	Args->CollectFiles("-file", NULL);	// anything left goes after -file
+	Args->CollectFiles("-file", nullptr);	// anything left goes after -file
 
 	gamestate = GS_STARTUP;
 
