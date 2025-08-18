@@ -270,7 +270,11 @@ public:
 	FPlayerStart *PickPlayerStart(int playernum, int flags = 0);
 	bool DoCompleted(FString nextlevel, wbstartstruct_t &wminfo);
 	void StartTravel();
+	void AddToTravellingList(DThinker* th);
+	void MoveTravellers();
 	int FinishTravel();
+	void UnlinkActorFromLevel(AActor& mo);
+	void LinkActorToLevel(AActor& mo);
 	void ChangeLevel(const char *levelname, int position, int flags, int nextSkill = -1);
 	const char *GetSecretExitMap();
 	void ExitLevel(int position, bool keepFacing);
@@ -456,6 +460,8 @@ public:
 
 	DThinker *CreateThinker(PClass *cls, int statnum = STAT_DEFAULT)
 	{
+		if (bPredictionGuard)
+			DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Spawned non-client-side Thinker %s while predicting\n", cls->TypeName.GetChars());
 		DThinker *thinker = static_cast<DThinker*>(cls->CreateNew());
 		assert(thinker->IsKindOf(RUNTIME_CLASS(DThinker)));
 		thinker->ObjectFlags |= OF_JustSpawned;
@@ -726,6 +732,7 @@ public:
 	TArray<uint16_t>	ParticlesInSubsec;
 	FThinkerCollection Thinkers;
 	FThinkerCollection ClientsideThinkers;
+	TArray<DThinker*> TravellingThinkers;
 
 	TArray<DVector2>	Scrolls;		// NULL if no DScrollers in this level
 

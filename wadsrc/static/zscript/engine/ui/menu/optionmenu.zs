@@ -778,7 +778,7 @@ class OptionMenu : Menu
 		}
 
 		CanScrollUp = (mDesc.mScrollPos > 0);
-		CanScrollDown = LastVisibleItem() > i;
+		CanScrollDown = LastVisibleItem() >= i;
 		VisBottom = lastDrawnItemIndex;
 
 		if (CanScrollUp)

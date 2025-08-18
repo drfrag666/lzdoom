@@ -1122,7 +1122,6 @@ set (PCH_SOURCES
 	common/cutscenes/movieplayer.cpp
 	common/cutscenes/screenjob.cpp
 	common/utility/engineerrors.cpp
-	common/utility/i_module.cpp
 	common/utility/gitinfo.cpp
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
@@ -1256,6 +1255,10 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
 )
+
+if( ZMUSIC_SYSTEM_INSTALL OR NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS)
+	set ( PCH_SOURCES ${PCH_SOURCES} common/utility/i_module.cpp )
+endif()
 
 if( ${HAVE_VM_JIT} )
 	set( PCH_SOURCES ${PCH_SOURCES} ${VM_JIT_SOURCES} )
@@ -1474,7 +1477,7 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
-if ( NOT APPLE )
+if ( NOT APPLE AND NOT ZMUSIC_SYSTEM_INSTALL)
 	# bring zmusic in
 	add_custom_command(TARGET zdoom POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>
