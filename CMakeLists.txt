@@ -198,14 +198,14 @@ endmacro()
 
 include( CheckFunctionExists )
 
-macro( require_stricmp )
+macro( gz_require_stricmp )
 	CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
 	if( NOT STRICMP_EXISTS )
 		add_definitions( -Dstricmp=strcasecmp )
 	endif()
 endmacro()
 
-macro( require_strnicmp )
+macro( gz_require_strnicmp )
 	CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
 	if( NOT STRNICMP_EXISTS )
 		add_definitions( -Dstrnicmp=strncasecmp )
@@ -219,6 +219,7 @@ find_package( VPX )
 if (NOT FORCE_INTERNAL_CPPDAP)
 	find_package( cppdap CONFIG )
 endif()
+find_package( ZMusic )
 
 include( TargetArch )
 
@@ -402,6 +403,19 @@ else()
 	set( CPPDAP_FOUND TRUE )
 endif()
 
+# ZMUSIC
+if( ZMUSIC_FOUND AND NOT FORCE_INTERNAL_ZMUSIC )
+	message( STATUS "Using system zmusic library, includes found at ${ZMUSIC_INCLUDE_DIR}" )
+	set( ZMUSIC_SYSTEM_INSTALL TRUE )
+else()
+	message( STATUS "Using internal zmusic library" )
+	add_subdirectory( libraries/ZMusic )
+	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libraries/zmusic" )
+	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
+	set( ZMUSIC_LIBRARIES zmusic )
+	set( ZMUSIC_FOUND TRUE )
+endif()
+
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
 
 if( NOT CMAKE_CROSSCOMPILING )
@@ -423,7 +437,6 @@ install(DIRECTORY docs/
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
 
 add_subdirectory( libraries/lzma )
-add_subdirectory( libraries/miniz )
 add_subdirectory( tools )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
@@ -431,6 +444,12 @@ add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
 add_subdirectory( wadsrc_widepix )
 add_subdirectory( src )
+
+if( ZMUSIC_SYSTEM_INSTALL )
+	# Internal ZMusic library provides miniz target, miniz.h file in partuclar
+	# It's not the case with system-wide ZMusic installation
+	add_subdirectory( libraries/miniz )
+endif()
 
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )

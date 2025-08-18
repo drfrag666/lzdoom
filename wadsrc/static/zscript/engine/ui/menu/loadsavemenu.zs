@@ -303,6 +303,16 @@ class LoadSaveMenu : ListMenu
 	//
 	//=============================================================================
 
+	virtual void TryDeleteMessage()
+	{
+		if (Selected != -1 && Selected < manager.SavegameCount())
+		{
+			String EndString;
+			EndString = String.Format("%s%s%s%s?\n\n%s", Stringtable.Localize("$MNU_DELETESG"), TEXTCOLOR_WHITE, manager.GetSavegame(Selected).SaveTitle, TEXTCOLOR_NORMAL, Stringtable.Localize("$PRESSYN"));
+			StartMessage (EndString, 0);
+		}
+	}
+
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
 		switch (mkey)
@@ -374,6 +384,14 @@ class LoadSaveMenu : ListMenu
 				manager.UnloadSaveData ();
 				manager.ExtractSaveData (Selected);
 				UpdateSaveComment();
+			}
+			return true;
+
+		case MKEY_Clear:
+			// This is handled by OnUIEvent for keyboard
+			if (fromcontroller == true)
+			{
+				TryDeleteMessage();
 			}
 			return true;
 
@@ -450,11 +468,7 @@ class LoadSaveMenu : ListMenu
 					return true;
 
 				case UIEvent.Key_DEL:
-					{
-						String EndString;
-						EndString = String.Format("%s%s%s%s?\n\n%s", Stringtable.Localize("$MNU_DELETESG"), TEXTCOLOR_WHITE, manager.GetSavegame(Selected).SaveTitle, TEXTCOLOR_NORMAL, Stringtable.Localize("$PRESSYN"));
-						StartMessage (EndString, 0);
-					}
+					TryDeleteMessage();
 					return true;
 				}
 			}
@@ -514,6 +528,17 @@ class SaveMenu : LoadSaveMenu
 	//
 	//
 	//=============================================================================
+
+	override void TryDeleteMessage()
+	{
+		// cannot delete 'new save game' item
+		if (Selected == 0)
+		{
+			return;
+		}
+
+		super.TryDeleteMessage();
+	}
 
 	override bool MenuEvent (int mkey, bool fromcontroller)
 	{
@@ -580,11 +605,6 @@ class SaveMenu : LoadSaveMenu
 			{
 				switch (ev.KeyChar)
 				{
-				case UIEvent.Key_DEL:
-					// cannot delete 'new save game' item
-					if (Selected == 0) return true;
-					break;
-
 				case 78://'N':
 					Selected = TopItem = 0;
 					manager.UnloadSaveData ();
