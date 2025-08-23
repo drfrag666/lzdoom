@@ -103,6 +103,11 @@ class OptionMenu : Menu
 	OptionMenuItem mFocusControl;
 	int linespacing;
 
+	bool ScrollSound;
+	bool HoverSound;
+	int OverScroll;
+	int OverScrollThreshold; // >= 0 : how much smaller a menu can be than the page to overscroll
+
 	//=============================================================================
 	//
 	//
@@ -117,6 +122,11 @@ class OptionMenu : Menu
 		DontBlur = desc.mDontBlur;
 		AnimatedTransition = desc.mAnimatedTransition;
 		Animated = desc.mAnimated;
+
+		ScrollSound = ! Cvar.FindCVar("silence_menu_scroll").getInt();
+		HoverSound = ! Cvar.FindCVar("silence_menu_hover").getInt();
+		OverScroll = MAX(0, Cvar.FindCVar("menu_overscroll").getInt());
+		OverScrollThreshold = OverScroll / 3; // this _could_ be exposed, but meh
 
 		let itemCount = mDesc.mItems.size();
 		if (itemCount > 0)
@@ -227,12 +237,11 @@ class OptionMenu : Menu
 
 	override bool OnUIEvent(UIEvent ev)
 	{
-		bool silentScroll = Cvar.FindCVar("silence_menu_scroll").getInt();
 		if (ev.type == UIEvent.Type_WheelUp)
 		{
 			if (MenuScrollViewport(-2, true) )
 			{
-				if (!silentScroll) MenuSound ("menu/cursor");
+				if (ScrollSound) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -240,7 +249,7 @@ class OptionMenu : Menu
 		{
 			if (MenuScrollViewport(2, true))
 			{
-				if (!silentScroll) MenuSound ("menu/cursor");
+				if (ScrollSound) MenuSound ("menu/cursor");
 			}
 			return true;
 		}
@@ -346,7 +355,7 @@ class OptionMenu : Menu
 					int maxItemsInternal = MaxItems;
 					if (maxItemsInternal < RemainingVisibleItems(0))
 					{
-						maxItemsInternal -= 2;
+						maxItemsInternal -= OverScroll;
 					}
 					if (maxItemsInternal <= 0) maxItemsInternal = 1;
 					int newTopIndex = 0;
@@ -356,9 +365,9 @@ class OptionMenu : Menu
 						if (mDesc.mItems[i].Visible())
 						{
 							visibleItemsOnPage++;
-							if (visibleItemsOnPage >= maxItemsInternal)
+							if (visibleItemsOnPage > maxItemsInternal)
 							{
-								newTopIndex = i;
+								newTopIndex = i - 1;
 								break;
 							}
 						}
@@ -503,19 +512,13 @@ class OptionMenu : Menu
 			mDesc.mScrollPos += lines;
 
 			// backtrack if we overshot
-			int visible = RemainingVisibleItems(mDesc.mScrollPos);
-			if (visible < MaxItems)
+			int visible;
+			int MinItems = MaxItems - OverScroll;
+			while (mDesc.mScrollPos > 0)
 			{
-				mDesc.mScrollPos = MAX(0, LastVisibleItem() - MaxItems);
 				visible = RemainingVisibleItems(mDesc.mScrollPos);
-				while (visible < MaxItems && mDesc.mScrollPos > 0)
-				{
-					if (mDesc.mItems[mDesc.mScrollPos].Visible())
-					{
-						visible++;
-					}
-					mDesc.mScrollPos--;
-				}
+				if (visible > MinItems) break;
+				mDesc.mScrollPos--;
 			}
 
 			// ensure cursor is visible (if possible)
@@ -644,8 +647,7 @@ class OptionMenu : Menu
 						{
 							mDesc.mSelectedItem = i;
 
-							bool silentHover = Cvar.FindCVar("silence_menu_hover").getInt();
-							if (!silentHover) MenuSound ("menu/cursor");
+							if (HoverSound) MenuSound ("menu/cursor");
 						}
 						mDesc.mItems[i].MouseEvent(type, x, y);
 						return true;
@@ -727,6 +729,8 @@ class OptionMenu : Menu
 	//=============================================================================
 	override void Drawer ()
 	{
+		int lastVisible;
+		bool drawCanScrollDown;
 		int y = mDesc.mPosition;
 
 		if (y <= 0)
@@ -777,8 +781,11 @@ class OptionMenu : Menu
 			y += fontheight;
 		}
 
-		CanScrollUp = (mDesc.mScrollPos > 0);
-		CanScrollDown = LastVisibleItem() >= i;
+		lastVisible = LastVisibleItem();
+		drawCanScrollDown = lastVisible >= i;
+		CanScrollUp = mDesc.mScrollPos > 0;
+		CanScrollDown = lastVisible + OverScroll >= i
+			&& RemainingVisibleItems(0) > MaxItems-OverScrollThreshold;
 		VisBottom = lastDrawnItemIndex;
 
 		if (CanScrollUp)
@@ -788,7 +795,7 @@ class OptionMenu : Menu
 			else
 				DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, OptionMenuSettings.mFontColorSelection, "▲");
 		}
-		if (CanScrollDown)
+		if (drawCanScrollDown)
 		{
 			if (ui_classic)
 				DrawConTextScaled(OptionMenuSettings.mFontColorSelection, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");

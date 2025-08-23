@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2017-2025 GZDoom Maintainers and Contributors
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -328,6 +329,7 @@ FString lastIWAD;
 int restart = 0;
 extern bool AppActive;
 bool playedtitlemusic;
+volatile sig_atomic_t gameloop_abort = false;
 
 FStartScreen* StartScreen;
 std::unique_ptr<DebugServer::DebugServer> debugServer;
@@ -1264,6 +1266,12 @@ void D_DoomLoop ()
 			D_ProcessEvents();
 			D_Display ();
 			S_UpdateMusic();
+
+			if (gameloop_abort)
+			{
+				C_DoCommand("quickexit");
+			}
+
 			if (wantToRestart)
 			{
 				wantToRestart = false;
@@ -3527,6 +3535,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		{
 			return 0;
 		}
+		setmodeneeded = true;
 	}
 
 	// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
@@ -3724,7 +3733,6 @@ static int D_DoomMain_Internal (void)
 		RemapUserTranslation
 	};
 
-	
 	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
 
@@ -3858,6 +3866,20 @@ static int D_DoomMain_Internal (void)
 		gamestate = GS_STARTUP;
 	}
 	while (1);
+}
+
+void SignalHandler(int signal)
+{
+	if (gameloop_abort)
+	{
+		Printf("Received signal %d, exiting\n", signal);
+		exit(0);
+	}
+	else
+	{
+		Printf("Received signal %d, shutting down\n", signal);
+		gameloop_abort = true;
+	}
 }
 
 int GameMain()
