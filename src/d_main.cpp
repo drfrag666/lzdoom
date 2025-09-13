@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "c_cvars.h"
+#include "i_soundinternal.h"
 #ifdef _WIN32
 #include <direct.h>
 #endif
@@ -46,11 +48,13 @@
 #include "autosegs.h"
 #include "c_buttons.h"
 #include "c_console.h"
+#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
 #include "common/scripting/dap/DebugServer.h"
 #include "d_buttons.h"
 #include "d_dehacked.h"
+#include "d_event.h"
 #include "d_main.h"
 #include "d_net.h"
 #include "d_netinf.h"
@@ -76,6 +80,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "i_interface.h"
 #include "i_sound.h"
+#include "i_soundinternal.h"
 #include "i_system.h"
 #include "i_time.h"
 #include "i_video.h"
@@ -197,6 +202,7 @@ EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Bool, vid_fps)
+EXTERN_CVAR(Bool, haptics_do_menus)
 
 extern bool setmodeneeded;
 extern bool demorecording;
@@ -223,7 +229,6 @@ CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL)
 		Printf("Time scale must be at least 0.05!\n");
 	}
 }
-
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -338,7 +343,6 @@ cycle_t FrameCycles;
 
 // [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
 uint32_t r_renderercaps = 0;
-
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -802,6 +806,7 @@ static void DrawPaletteTester(int paletteno)
 // Draws the fps counter, dot ticker, and palette debug.
 //
 //==========================================================================
+
 uint64_t LastFPS, LastMSCount;
 
 void CalcFps()
@@ -809,13 +814,13 @@ void CalcFps()
 	static uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastTic = 0;
 
 	uint64_t ms = screen->FrameTime;
-	uint64_t howlong = ms - LastMS;
+	uint64_t howlong = (ms - LastMS) / i_timescale;
 	if ((signed)howlong > 0) // do this only once per frame.
 	{
 		uint32_t thisSec = (uint32_t)(ms / 1000);
 		if (LastSec < thisSec)
 		{
-			LastFPS = FrameCount / (thisSec - LastSec);
+			LastFPS = FrameCount / (thisSec - LastSec) * i_timescale;
 			LastSec = thisSec;
 			FrameCount = 0;
 		}
@@ -1089,7 +1094,6 @@ void D_Display ()
 		case GS_INTRO:
 			ScreenJobDraw();
 			break;
-
 
 			default:
 				break;
@@ -1582,7 +1586,6 @@ void D_DoAdvanceDemo (void)
 		break;
 	}
 
-
 	if (pagename.IsNotEmpty())
 	{
 		Page = TexMan.CheckForTexture(pagename.GetChars(), ETextureType::MiscPatch);
@@ -1836,7 +1839,6 @@ static void GetCmdLineFiles(std::vector<std::string>& wadfiles)
 		D_AddWildFile(wadfiles, args[i].GetChars(), ".wad", GameConfig);
 	}
 }
-
 
 static FString ParseGameInfo(std::vector<std::string> &pwads, const char *fn, const char *data, int size)
 {
@@ -2286,7 +2288,6 @@ static void NewFailure ()
     I_FatalError ("Failed to allocate memory from system heap");
 }
 
-
 //==========================================================================
 //
 // RenameSprites
@@ -2467,6 +2468,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 // MD5 checksum for Unity version of NERVE.WAD: 4214c47651b63ee2257b1c2490a518c9 (3,821,966)
 //
 //==========================================================================
+
 void RenameNerve(FileSystem& fileSystem)
 {
 	if (gameinfo.gametype != GAME_Doom)
@@ -2654,7 +2656,6 @@ static void FindStrifeTeaserVoices(FileSystem& fileSystem)
 	}
 }
 
-
 static const char *DoomButtons[] =
 {
 	"am_panleft",
@@ -2815,14 +2816,13 @@ static bool System_CaptureModeInGame()
 
 static void System_PlayStartupSound(const char* sndname)
 {
-	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
+	S_Sound(CHAN_BODY, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), sndname, 1, ATTN_NONE);
 }
 
 static bool System_IsSpecialUI()
 {
 	return (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || multiplayer ||
 		(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
-
 }
 
 static bool System_DisableTextureFilter()
@@ -2949,7 +2949,6 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 
 void System_M_Dim();
 
-
 static void PatchTextures()
 {
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
@@ -3052,7 +3051,6 @@ static void Doom_CastSpriteIDToString(FString* a, unsigned int b)
 	*a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; 
 }
 
-
 extern DThinker* NextToThink;
 
 static void GC_MarkGameRoots()
@@ -3148,6 +3146,7 @@ static int FileSystemPrintf(FSMessageLevel level, const char* fmt, ...)
 	}
 	return (int)text.Len();
 }
+
 //==========================================================================
 //
 // D_InitGame
@@ -3240,8 +3239,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		FString NewFilterName = (FString)"doom.doom" + LumpFilterIWAD.Mid(12); // "doom.id.doom" is 12 characters
 		lfi.gameTypeFilter.push_back(NewFilterName.GetChars());
 	}
-
-
 
 	GetReserved(lfi);
 
@@ -3480,7 +3477,6 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	M_Init();
 	M_CreateGameMenus();
 
-
 	// clean up the compiler symbols which are not needed any longer.
 	if (!dap_debugging) RemoveUnusedSymbols();
 
@@ -3566,7 +3562,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 			autostart = true;
 		}
 
-		S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
+		S_Sound(CHAN_BODY, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "misc/startupdone", 1, ATTN_NONE);
 
 		if (Args->CheckParm("-norun") || batchrun)
 		{
@@ -3675,6 +3671,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 	staticEventManager.OnEngineInitialize();
 	return 0;
 }
+
 //==========================================================================
 //
 // D_DoomMain
