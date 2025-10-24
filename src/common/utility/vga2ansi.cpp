@@ -1,4 +1,5 @@
 // Copyright (c) 2025 Rachael Alexanderson
+// Copyright (c) 2025 GZDoom Maintainers and Contributors
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -49,6 +50,8 @@ static void CPrint(const char* in)
 }
 #endif
 
+enum class Support { DUMB, NONE, BASIC, FULL };
+
 static const char *ansi_esc[2] = {"\x1b[", ";"};
 static const char *ansi_end[2] = {"", "m"};
 
@@ -90,15 +93,57 @@ inline void ansi_ctrl(bool open)
 	is_ansi_open = open;
 }
 
+// Best effort to translate cp437 to ascii, in order to support dumb terminals
+char cp437_to_ascii(uint8_t ch)
+{
+#if 1
+	static char lo[32] = {
+///////	 0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+/* 0 */	' ','+','#','+','+','+','+','+','#','+','#','+','+','+','+','+',
+/* 1 */	'<','>','|','!','$','$','-','|','^','v','<','>','-','-','^','v',
+	};
+
+	if (ch < 32) return lo[ch];
+
+	static char hi[128] = {
+///////	 0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+/* 8 */	'C','u','e','a','a','a','a','c','e','e','e','i','i','i','A','A',
+/* 9 */	'E','a','A','o','o','o','u','u','y','O','U','$','$','$','$','f',
+/* a */	'a','i','o','u','n','N','*','*','?','-','-','/','/','!','"','"',
+/* b */	':','+','#','|','+','+','+','+','+','+','|','+','+','+','+','+',
+/* c */	'+','+','+','+','-','+','+','+','+','+','+','+','+','-','+','+',
+/* d */	'+','+','+','+','+','+','+','+','+','+','+','#','-','|','|','-',
+/* e */	'a','B','G','p','S','s','u','t','P','T','O','d','8','h','E','-',
+/* f */	'=','+','>','<','|','|','%','=','*','*','*','Q','n','2','#',' ',
+	};
+
+	if (ch >= 128) return hi[ch-128];
+#else
+	if (ch < 32 || ch >= 128) return ' ';
+#endif
+
+	return ch;
+}
+
 void ibm437_to_utf8(char* result, char in);
 
-void vga_to_ansi(const uint8_t *buf) 
+void vga_to_ansi(const uint8_t *buf)
 {
 #ifdef _WIN32
-	bool truecolor = true;
+	// FIXME: support for alternative terminals and old windows
+	Support termcaps = Support::FULL;
 #else
-	const char *ct = getenv("COLORTERM");
-	bool truecolor = ct && (strcmp(ct, "truecolor") || strcmp(ct, "24bit"));
+	const char *term = getenv("TERM");
+	const char *cterm = getenv("COLORTERM");
+
+	Support termcaps =
+		(!term || strcmp(term, "dumb")==0)
+			? Support::DUMB
+		: (!cterm)
+			? Support::NONE
+		: (strcmp(cterm, "truecolor")==0 || strcmp(cterm, "24bit")==0)
+			? Support::FULL
+			: Support::BASIC;
 #endif
 
 	for (int row = 0; row < 25; ++row) 
@@ -115,44 +160,52 @@ void vga_to_ansi(const uint8_t *buf)
 			bool blink = !!(attr & 0x80);
 			bool spacer = (ch == 0) || (ch == 32) || (ch == 255);
 
-			// Output color if changed
-			if ((fg != last_fg) && !spacer)
+			if (termcaps > Support::NONE)
 			{
-				ansi_ctrl(1);
-				if (truecolor)
-					CPrint(ansi_tc_fg[fg]);
-				else
-					CPrint(ansi_fg[fg]);
-				last_fg = fg;
+				// Output color if changed
+				if ((fg != last_fg) && !spacer)
+				{
+					ansi_ctrl(1);
+					if (termcaps == Support::FULL)
+						CPrint(ansi_tc_fg[fg]);
+					else
+						CPrint(ansi_fg[fg]);
+					last_fg = fg;
+				}
+				if (bg != last_bg)
+				{
+					ansi_ctrl(1);
+					if (termcaps == Support::FULL)
+						CPrint(ansi_tc_bg[bg]);
+					else
+						CPrint(ansi_bg[bg]);
+					last_bg = bg;
+				}
+				if (blink != last_blink)
+				{
+					ansi_ctrl(1);
+					CPrint(ansi_flash[blink]);
+					last_blink = blink;
+				}
+				ansi_ctrl(0);
 			}
-			if (bg != last_bg) 
-			{
-				ansi_ctrl(1);
-				if (truecolor)
-					CPrint(ansi_tc_bg[bg]);
-				else
-					CPrint(ansi_bg[bg]);
-				last_bg = bg;
-			}
-			if (blink != last_blink)
-			{
-				ansi_ctrl(1);
-				CPrint(ansi_flash[blink]);
-				last_blink = blink;
-			}
-			ansi_ctrl(0);
 
-			// Output character, convert CP437 to UTF-8
-			if (spacer)
-				CPrint(" ");
+			if (termcaps == Support::DUMB)
+			{
+				char result[2] = { cp437_to_ascii(ch), '\0' };
+				CPrint(result);
+			}
 			else
 			{
-				char result[4];
-				ibm437_to_utf8(result, ch);
+				// Output character, convert CP437 to UTF-8
+				char result[4] = "\u00A0"; // use nbsp as space
+				if (!spacer) ibm437_to_utf8(result, ch);
 				CPrint(result);
 			}
 		}
-		CPrint("\x1b[0m\n"); // Reset colors and end the line
+		if (termcaps > Support::NONE)
+			CPrint("\x1b[0m"); // Reset colors
+		CPrint("\n");
 	}
 }
 

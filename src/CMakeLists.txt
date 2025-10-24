@@ -353,6 +353,8 @@ endif()
 
 # Flags
 
+option(BUILD_FLATPAK "Enable Flatpak-specific build options" OFF)
+
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
@@ -1338,6 +1340,9 @@ set_source_files_properties( common/engine/sc_man.cpp PROPERTIES OBJECT_DEPENDS 
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 set_source_files_properties( ${GAME_NONPCH_SOURCES} common/textures/hires/hqresize.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE )
 
+if(BUILD_FLATPAK)
+	target_compile_definitions(zdoom PRIVATE IS_FLATPAK=1)
+endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	# [BL] Solaris requires these to be explicitly linked.
@@ -1488,7 +1493,7 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
-if ( NOT APPLE AND NOT ZMUSIC_SYSTEM_INSTALL AND (NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS))
+if ( NOT ZMUSIC_SYSTEM_INSTALL AND (NOT DEFINED BUILD_SHARED_LIBS OR BUILD_SHARED_LIBS))
 	# bring zmusic in
 	add_custom_command(TARGET zdoom POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:zmusic> $<TARGET_FILE_DIR:zdoom>
