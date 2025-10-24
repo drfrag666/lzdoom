@@ -156,7 +156,7 @@ namespace swrenderer
 
 			viewport->CenterY = viewheight / 2;
 
-			P_BobWeapon(viewport->viewpoint.camera->player, &bobx, &boby, viewport->viewpoint.TicFrac);
+			P_BobWeapon(viewport->viewpoint.camera->player, &bobx, &boby, Net_ModifyFrac(viewport->viewpoint.TicFrac));
 
 			// Interpolate the main weapon layer once so as to be able to add it to other layers.
 			if ((weapon = viewport->viewpoint.camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
@@ -168,8 +168,9 @@ namespace swrenderer
 				}
 				else
 				{
-					wx = weapon->oldx + (weapon->x - weapon->oldx) * viewport->viewpoint.TicFrac;
-					wy = weapon->oldy + (weapon->y - weapon->oldy) * viewport->viewpoint.TicFrac;
+					const double frac = Net_ModifyObjectFrac(weapon, viewport->viewpoint.TicFrac);
+					wx = weapon->oldx + (weapon->x - weapon->oldx) * frac;
+					wy = weapon->oldy + (weapon->y - weapon->oldy) * frac;
 				}
 			}
 			else
@@ -189,7 +190,7 @@ namespace swrenderer
 
 				if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 				{
-					RenderSprite(psp, viewport->viewpoint.camera, bobx, boby, wx, wy, viewport->viewpoint.TicFrac, lightlevel, basecolormap, foggy);
+					RenderSprite(psp, viewport->viewpoint.camera, bobx, boby, wx, wy, Net_ModifyObjectFrac(psp, viewport->viewpoint.TicFrac), lightlevel, basecolormap, foggy);
 				}
 
 				psp = psp->GetNext();

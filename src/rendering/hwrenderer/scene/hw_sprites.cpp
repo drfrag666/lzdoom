@@ -44,6 +44,7 @@
 #include "vectors.h"
 #include "texturemanager.h"
 #include "basics.h"
+#include "d_net.h"
 
 #include "hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
@@ -314,8 +315,16 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 					state.SetDynLight(probe->Red, probe->Green, probe->Blue);
 			}
 
+			if(actor && (actor->flags9 & MF9_DECOUPLEDANIMATIONS))
+			{
+				IFVIRTUALPTR(actor, AActor, AnimateBones)
+				{
+					CallVM<void>(func, actor, di->Viewpoint.TicFrac);
+				}
+			}
+
 			FHWModelRenderer renderer(di, state, dynlightindex);
-			RenderModel(&renderer, x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
+			RenderModel(&renderer, x, y, z, modelframe, actor, Net_ModifyObjectFrac(actor, di->Viewpoint.TicFrac));
 			state.SetVertexBuffer(screen->mVertexData);
 		}
 	}
@@ -956,7 +965,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// [RH] Make floatbobbing a renderer-only effect.
 	else
 	{
-		float fz = thing->GetBobOffset(vp.TicFrac);
+		float fz = thing->GetBobOffset(Net_ModifyObjectFrac(thing, vp.TicFrac));
 		z += fz;
 	}
 
@@ -1536,7 +1545,7 @@ void HWSprite::ProcessParticle(HWDrawInfo *di, particle_t *particle, sector_t *s
 	ThingColor.a = 255;
 	const auto& vp = di->Viewpoint;
 
-	double timefrac = vp.TicFrac;
+	double timefrac = Net_ModifyParticleFrac(particle, vp.TicFrac);
 	if (paused || (di->Level->isFrozen() && !(particle->flags & SPF_NOTIMEFREEZE)))
 		timefrac = 0.;
 
@@ -1664,7 +1673,7 @@ void HWSprite::AdjustVisualThinker(HWDrawInfo* di, DVisualThinker* spr, sector_t
 	translation = spr->Translation;
 
 	const auto& vp = di->Viewpoint;
-	double timefrac = vp.TicFrac;
+	double timefrac = Net_ModifyObjectFrac(spr, vp.TicFrac);
 
 	if (paused || spr->isFrozen())
 		timefrac = 0.;

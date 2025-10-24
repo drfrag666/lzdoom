@@ -123,11 +123,61 @@ class Behavior native play abstract version("4.15")
 class BehaviorIterator native abstract final version("4.15")
 {
 	native static BehaviorIterator CreateFrom(Actor mobj, class<Behavior> type = null);
-	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null);
-	native static BehaviorIterator CreateClientSide(class<Behavior> type = null, class<Actor> ownerType = null);
+	native static BehaviorIterator Create(class<Behavior> type = null, class<Actor> ownerType = null, bool clientSide = false);
 
 	native Behavior Next();
 	native void Reinit();
+}
+
+struct TRS
+{
+	FVector3 translation;
+	FQuat rotation;
+	FVector3 scaling;
+}
+
+class AnimationFrame native abstract sealed(PrecalculatedAnimationFrame, InterpolatedFrame) {}
+
+class PrecalculatedAnimationFrame : AnimationFrame native final
+{
+	native Array<TRS> frameData; //hacky but required
+}
+
+class InterpolatedFrame : AnimationFrame native final
+{
+	native float inter;	// = -1.0f;
+	native int frame1;		// = -1;
+	native int frame2;		// = -1;
+}
+
+enum EModelAnimFlags
+{
+	MODELANIM_NONE			= 1 << 0, // no animation
+	MODELANIM_LOOP			= 1 << 1, // animation loops, otherwise it stays on the last frame once it ends
+};
+
+class AnimationSequence native final
+{
+	native int firstFrame;			// = 0;
+	native int lastFrame;			// = 0;
+	native int loopFrame;			// = 0;
+	native float framerate;			// = 0;
+	native double startFrame;		// = 0;
+	native int flags;				// = MODELANIM_NONE;
+	native double startTic;			// = 0; // when the current animation started (changing framerates counts as restarting) (or when animation starts if interpolating from previous animation)
+	native double switchOffset;		// = 0; // when the animation was changed -- where to interpolate the switch from
+
+	AnimationSequence Init()
+	{
+		flags = MODELANIM_NONE;
+		return self;
+	}
+}
+
+class AnimationLayer native final
+{
+	native AnimationSequence curAnim;
+	native AnimationFrame prevAnim;
 }
 
 class Actor : Thinker native
@@ -827,7 +877,7 @@ class Actor : Thinker native
 	native bool CheckPosition(Vector2 pos, bool actorsonly = false, FCheckPosition tm = null);
 	native bool TestMobjLocation();
 	native static Actor Spawn(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
-	native static clearscope Actor SpawnClientside(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
+	native static clearscope Actor SpawnClientSide(class<Actor> type, vector3 pos = (0,0,0), int replace = NO_REPLACE);
 	native Actor SpawnMissile(Actor dest, class<Actor> type, Actor owner = null);
 	native Actor SpawnMissileXYZ(Vector3 pos, Actor dest, Class<Actor> type, bool checkspawn = true, Actor owner = null);
 	native Actor SpawnMissileZ (double z, Actor dest, class<Actor> type);
@@ -1551,6 +1601,58 @@ class Actor : Thinker native
 
 	native version("4.15") void GetObjectToWorldMatrixRaw(out Array<double> outMatrix);
 
+
+
+	//================================================
+	// 
+	// Animation Sequence
+	// 
+	//================================================
+	
+	native version("4.15.1") AnimationLayer SetAnimationLayerAnimation(AnimationLayer layer, Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
+	native version("4.15.1") ui AnimationLayer SetAnimationLayerAnimationUI(AnimationLayer layer, Name animName, double framerate = -1, int startFrame = -1, int loopFrame = -1, int endFrame = -1, int interpolateTics = -1, int flags = 0);
+	
+	native version("4.15.1") AnimationLayer SetAnimationLayerFrameRate(AnimationLayer layer, double framerate);
+	native version("4.15.1") ui AnimationLayer SetAnimationLayerFrameRateUI(AnimationLayer layer, double framerate);
+
+	native version("4.15.1") PrecalculatedAnimationFrame CalculateAnimation(readonly<AnimationLayer> layer);
+	native version("4.15.1") ui PrecalculatedAnimationFrame CalculateAnimationUI(readonly<AnimationLayer> layer);
+
+	native version("4.15.1") static clearscope PrecalculatedAnimationFrame BlendAnimationFrames(PrecalculatedAnimationFrame a, PrecalculatedAnimationFrame b, double t);
+	native version("4.15.1") static clearscope PrecalculatedAnimationFrame OffsetAnimationFrame(PrecalculatedAnimationFrame frame, PrecalculatedAnimationFrame offset);
+	
+	native version("4.15.1") clearscope PrecalculatedAnimationFrame CalculateAnimationFrame(readonly<InterpolatedFrame> frame);
+
+	// tic should be Level.totaltime + fractic
+	//
+	// returns AnimationFrame frame1, InterpolatedFrame frame2, double inter
+	// frame1 is the frame to interpolate from, it may be either a PrecalculatedAnimationFrame or a InterpolatedFrame, if inter is -1, frame1 will be null, and frame2 should be used in full instead
+	// frame2 is the frame to interpolate to, always an InterpolatedFrame
+	// inter is the ratio between frame1 and frame2, if the animation isn't interpolating, it will be 1 and frame 1 will be null
+	// frame1/2 will both be null if an invalid tic or layer are passed
+	// 
+	// NOTE: while interpolating, an animation may need to perform up to 4-way blending if both frame1 and frame2 are InterpolatedFrame
+	//
+	native version("4.15.1") static clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrameAt(readonly<AnimationLayer> layer, double tic);
+	
+	native version("4.15.1") clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrame(readonly<AnimationLayer> layer);
+	native version("4.15.1") clearscope AnimationFrame, InterpolatedFrame, double FindAnimationFrameUI(readonly<AnimationLayer> layer);
+
+	native version("4.15.1") void SetBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void SetBonesUI(PrecalculatedAnimationFrame bones, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void OverwriteBones(PrecalculatedAnimationFrame bones, int mode = SB_ADD); // no interpolation, faster
+	
+	native version("4.15.1") void SetBonesRange(PrecalculatedAnimationFrame bones, int start, int length, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void SetBonesRangeUI(PrecalculatedAnimationFrame bones, int start, int length, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void OverwriteBonesRange(PrecalculatedAnimationFrame bones, int start, int length, int mode = SB_ADD); // no interpolation, faster
+	
+	native version("4.15.1") void SetBonesMask(PrecalculatedAnimationFrame bones, Array<bool> mask, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void SetBonesMaskUI(PrecalculatedAnimationFrame bones, Array<bool> mask, int mode = SB_ADD, double interpolation_duration = 1.0);
+	native version("4.15.1") ui void OverwriteBonesMask(PrecalculatedAnimationFrame bones, Array<bool> mask, int mode = SB_ADD); // no interpolation, faster
+
+	native version("4.15.1") void ForceRecalculateBones(); // slow if called often, try and keep it to at most once per tick
+
+	version("4.15.1") ui virtual void AnimateBones(double ticfrac){}
 	//================================================
 	//
 	//

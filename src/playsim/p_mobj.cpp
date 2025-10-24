@@ -203,7 +203,7 @@ DEFINE_FIELD(DBehavior, Level)
 
 void AActor::EnableNetworking(const bool enable)
 {
-	if (!enable && !IsClientside())
+	if (!enable && !IsClientSide())
 	{
 		ThrowAbortException(X_OTHER, "Cannot disable networking on Actors. Consider a Thinker or clientside Actor instead.");
 		return;
@@ -657,7 +657,7 @@ void AActor::MoveBehaviors(AActor& from)
 	if (&from == this)
 		return;
 
-	if (IsClientside() != from.IsClientside())
+	if (IsClientSide() != from.IsClientSide())
 		I_Error("Cannot move Behaviors between client-side and world Actors");
 
 	// Clean these up properly before transferring.
@@ -855,7 +855,7 @@ bool AActor::IsMapActor()
 
 inline int GetTics(AActor* actor, FState * newstate)
 {
-	int tics = actor->IsClientside() ? newstate->GetClientsideTics() : newstate->GetTics();
+	int tics = actor->IsClientSide() ? newstate->GetClientSideTics() : newstate->GetTics();
 	if (actor->isFast() && newstate->GetFast())
 	{
 		return tics - (tics>>1);
@@ -1817,6 +1817,16 @@ FSerializer &Serialize(FSerializer &arc, const char *key, BoneOverride &mod, Bon
 	return arc;
 }
 
+FSerializer &Serialize(FSerializer &arc, const char *key, TRS &trs, TRS *def)
+{
+	arc.BeginObject(key);
+	arc("translation", trs.translation);
+	arc("rotation", trs.rotation);
+	arc("scaling", trs.scaling);
+	arc.EndObject();
+	return arc;
+}
+
 FSerializer &Serialize(FSerializer &arc, const char *key, ModelOverride &mo, ModelOverride *def)
 {
 	arc.BeginObject(key);
@@ -1926,8 +1936,8 @@ void DActorModelData::Serialize(FSerializer& arc)
 		("flags", flags)
 		("overrideFlagsSet", overrideFlagsSet)
 		("overrideFlagsClear", overrideFlagsClear)
-		("curAnim", curAnim)
-		("prevAnim", prevAnim);
+		("curAnim", anims.curAnim)
+		("prevAnim", anims.prevAnim);
 }
 
 void DActorModelData::OnDestroy()
@@ -3559,7 +3569,7 @@ void AActor::AddToHash ()
 	else
 	{
 		int hash = TIDHASH (tid);
-		auto &slot = IsClientside() ? Level->ClientSideTIDHash[hash] : Level->TIDHash[hash];
+		auto &slot = IsClientSide() ? Level->ClientSideTIDHash[hash] : Level->TIDHash[hash];
 
 		inext = slot;
 		iprev = &slot;
@@ -4570,9 +4580,9 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->anims.curAnim.flags & MODELANIM_NONE))
 			{
-				modelData->curAnim.startTic += 1;
+				modelData->anims.curAnim.startTic += 1;
 			}
 
 			return;
@@ -4623,9 +4633,9 @@ void AActor::Tick ()
 				special2++;
 			}
 
-			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->curAnim.flags & MODELANIM_NONE))
+			if(flags9 & MF9_DECOUPLEDANIMATIONS && modelData && !(modelData->anims.curAnim.flags & MODELANIM_NONE))
 			{
-				modelData->curAnim.startTic += 1;
+				modelData->anims.curAnim.startTic += 1;
 			}
 
 			return;
@@ -5395,7 +5405,7 @@ DEFINE_ACTION_FUNCTION(AActor, UpdateWaterLevel)
 
 void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 {
-	const bool clientside = actor->IsClientside();
+	const bool clientside = actor->IsClientSide();
 	auto Level = actor->Level;
 	actor->SpawnTime = Level->totaltime;
 	actor->SpawnOrder = Level->spawnindex++;
@@ -5436,7 +5446,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	// routine, it will not be called.
 	FState *st = actor->SpawnState;
 	actor->state = st;
-	actor->tics = clientside ? st->GetClientsideTics() : st->GetTics();
+	actor->tics = clientside ? st->GetClientSideTics() : st->GetTics();
 	
 	actor->sprite = st->sprite;
 	actor->frame = st->GetFrame();
@@ -5592,7 +5602,7 @@ AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVecto
 
 	if (GetDefaultByType(type)->ObjectFlags & OF_ClientSide)
 	{
-		actor = static_cast<AActor*>(Level->CreateClientsideThinker(type));
+		actor = static_cast<AActor*>(Level->CreateClientSideThinker(type));
 	}
 	else
 	{
@@ -5615,7 +5625,7 @@ DEFINE_ACTION_FUNCTION(AActor, Spawn)
 	ACTION_RETURN_OBJECT(AActor::StaticSpawn(currentVMLevel, type, DVector3(x, y, z), replace_t(flags)));
 }
 
-static AActor* SpawnClientside(PClassActor* type, double x, double y, double z, int flags)
+static AActor* SpawnClientSide(PClassActor* type, double x, double y, double z, int flags)
 {
 	if (!(GetDefaultByType(type)->ObjectFlags & OF_ClientSide))
 	{
@@ -5626,7 +5636,7 @@ static AActor* SpawnClientside(PClassActor* type, double x, double y, double z, 
 	return AActor::StaticSpawn(currentVMLevel, type, { x, y, z }, (replace_t)flags);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnClientside, SpawnClientside)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnClientSide, SpawnClientSide)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS_NOT_NULL(type, AActor);
@@ -5634,7 +5644,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, SpawnClientside, SpawnClientside)
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
 	PARAM_INT(flags);
-	ACTION_RETURN_OBJECT(SpawnClientside(type, x, y, z, flags));
+	ACTION_RETURN_OBJECT(SpawnClientSide(type, x, y, z, flags));
 }
 
 PClassActor *ClassForSpawn(FName classname)

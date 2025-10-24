@@ -661,7 +661,7 @@ struct CallReturn
 // what they're doing.
 static bool CanCreateClientSideScripts(const AActor* activator)
 {
-	return activator == nullptr || activator->IsClientside() || (activator->player != nullptr && activator->player->mo == activator);
+	return activator == nullptr || activator->IsClientSide() || (activator->player != nullptr && activator->player->mo == activator);
 }
 
 static AActor* GetScriptOwner(AActor& activator)
@@ -671,7 +671,7 @@ static AActor* GetScriptOwner(AActor& activator)
 
 static bool ShouldIgnoreClientSideScript(AActor* activator)
 {
-	if (activator == nullptr || activator->IsClientside())
+	if (activator == nullptr || activator->IsClientSide())
 		return false;
 
 	AActor* owner = GetScriptOwner(*activator);
@@ -10496,7 +10496,7 @@ DLevelScript::DLevelScript (FLevelLocals *l, AActor *who, line_t *where, int num
 	if (clientside)
 	{
 		if (Level->ClientSideACSThinker == nullptr)
-			Level->ClientSideACSThinker = Level->CreateClientsideThinker<DACSThinker>();
+			Level->ClientSideACSThinker = Level->CreateClientSideThinker<DACSThinker>();
 
 		bClientSide = true;
 	}

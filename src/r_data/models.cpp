@@ -134,7 +134,7 @@ VSMatrix FSpriteModelFrame::ObjectToWorldMatrix(AActor * actor, float x, float y
 
 	double tic = actor->Level->totaltime;
 
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}
@@ -382,10 +382,10 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 	if(is_decoupled)
 	{
 		smfNext = smf = &BaseSpriteModelFrames[(data != nullptr && data->modelDef != nullptr) ? data->modelDef : actor->GetClass()];
-		if(data && !(data->curAnim.flags & MODELANIM_NONE))
+		if(data && !(data->anims.curAnim.flags & MODELANIM_NONE))
 		{
-			calcFrames(data->curAnim, tic, decoupled_frame, inter);
-			decoupled_frame_prev = &data->prevAnim;
+			calcFrames(data->anims.curAnim, tic, decoupled_frame, inter);
+			decoupled_frame_prev = &data->anims.prevAnim;
 		}
 	}
 	else if (gl_interpolate_model_frames && !(smf_flags & MDL_NOINTERPOLATION))
@@ -396,7 +396,7 @@ CalcModelFrameInfo CalcModelFrame(FLevelLocals *Level, const FSpriteModelFrame *
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !Level->isFrozen())
+			if (!WorldPaused() && !Level->isFrozen())
 			{
 				ticFraction = ticFrac;
 			}
@@ -643,7 +643,7 @@ static inline void RenderModelFrame(FModelRenderer *renderer, int i, const FSpri
 void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, int curTics, double ticFrac, FTranslationID translation, AActor* actor)
 {
 	double tic = actor->Level->totaltime;
-	if ((ConsoleState == c_up || ConsoleState == c_rising) && (menuactive == MENU_Off || menuactive == MENU_OnNoPause) && !actor->isFrozen())
+	if (!WorldPaused() && !actor->isFrozen())
 	{
 		tic += ticFrac;
 	}

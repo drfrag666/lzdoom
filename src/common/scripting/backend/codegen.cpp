@@ -5,6 +5,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008-2016 Christoph Oelckers
+** Copyright 2017-2025 GZDoom Maintainers and Contributors
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -36,6 +37,7 @@
 #include <stdlib.h>
 #include "cmdlib.h"
 #include "codegen.h"
+#include "sc_man.h"
 #include "v_text.h"
 #include "filesystem.h"
 #include "v_video.h"
@@ -4695,8 +4697,8 @@ ExpEmit FxShift::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
-	: FxBinary(TK_LtGtEq, l, r)
+FxSpaceship::FxSpaceship(int op, FxExpression *l, FxExpression *r)
+	: FxBinary(op, l, r)
 {
 	ValueType = TypeSInt32;
 }
@@ -4707,7 +4709,7 @@ FxLtGtEq::FxLtGtEq(FxExpression *l, FxExpression *r)
 //
 //==========================================================================
 
-FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
+FxExpression *FxSpaceship::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
@@ -4719,13 +4721,28 @@ FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 		return nullptr;
 	}
 
+	if(ctx.Version >= MakeVersion(4, 15, 1))
+	{
+		if(Operator == TK_LtGtEq)
+		{
+			ScriptPosition.Message(MSG_WARNING, "<>= is deprecated in favor of <=>");
+		}
+	}
+	else if(Operator == TK_LtEqGt)
+	{
+		ScriptPosition.Message(MSG_ERROR, "<=> requires ZScript version 4.15.1 or above");
+		delete this;
+		return nullptr;
+	}
+
+
 	if (left->IsNumeric() && right->IsNumeric())
 	{
 		Promote(ctx);
 	}
 	else
 	{
-		ScriptPosition.Message(MSG_ERROR, "<>= expects two numeric operands");
+		ScriptPosition.Message(MSG_ERROR, "%s expects two numeric operands", (Operator == TK_LtEqGt) ? "<=>" : "<>=");
 		delete this;
 		return nullptr;
 	}
@@ -4748,7 +4765,7 @@ FxExpression *FxLtGtEq::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpEmit FxLtGtEq::Emit(VMFunctionBuilder *build)
+ExpEmit FxSpaceship::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit op1 = left->Emit(build);
 	ExpEmit op2 = right->Emit(build);
@@ -9173,7 +9190,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			if (PFunction **Override; ctx.Version >= MakeVersion(4, 2, 0) && (Override = static_cast<PDynArray*>(Self->ValueType)->FnOverrides.CheckKey(MethodName)))
+			if (PFunction **Override; ctx.Version >= MakeVersion(3, 7, 0) && (Override = static_cast<PDynArray*>(Self->ValueType)->FnOverrides.CheckKey(MethodName)))
 			{
 				afd_override = *Override;
 			}
