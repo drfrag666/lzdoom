@@ -472,7 +472,6 @@ dap::ResponseOrError<dap::SetInstructionBreakpointsResponse> BreakpointManager::
 			auto bpoint_info = BreakpointInfo {};
 
 			bpoint_info.type = BreakpointInfo::Type::Instruction;
-			int ref;
 			auto scriptFunc = dynamic_cast<VMScriptFunction *>(func);
 
 			if (IsFunctionNative(func) || !scriptFunc)

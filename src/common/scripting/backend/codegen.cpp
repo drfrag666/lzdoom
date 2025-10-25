@@ -3365,7 +3365,7 @@ FxExpression *FxAddSub::Resolve(FCompileContext& ctx)
 		// To check: It may be that this could pass in DECORATE, although setting TypeVoid here would pretty much prevent that.
 		goto error;
 	}
-goon:
+// goon:
 	if (left->isConstant() && right->isConstant())
 	{
 		if (IsFloat())
