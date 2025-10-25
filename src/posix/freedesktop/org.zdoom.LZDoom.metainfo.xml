@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <component type="desktop-application">
-  <id>org.zdoom.GZDoom</id>
-  <launchable type="desktop-id">org.zdoom.GZDoom.desktop</launchable>
+  <id>org.zdoom.LZDoom</id>
+  <launchable type="desktop-id">org.zdoom.LZDoom.desktop</launchable>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0</project_license>
 
-  <name>GZDoom</name>
-  <developer id="org.zdoom.GZDoom">
+  <name>LZDoom</name>
+  <developer id="org.zdoom.LZDoom">
     <name>ZDoom team</name>
-    <url>https://github.com/zdoom/GZDDoom/graphs/contributors</url>
+    <url>https://github.com/zdoom/GZDoom/graphs/contributors</url>
   </developer>
   <summary>Game engine for Classic Doom</summary>
 

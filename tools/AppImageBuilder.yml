@@ -4,9 +4,9 @@ version: 1
 
 AppDir:
   app_info:
-    id: org.zdoom.GZDoom
+    id: org.zdoom.LZDoom
     name: LZDoom
-    icon: org.zdoom.GZDoom
+    icon: org.zdoom.LZDoom
     version: '{{GIT_DESCRIBE}}'
     exec: ./usr/bin/lzdoom
     exec_args: $@
