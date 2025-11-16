@@ -68,7 +68,8 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL2/SDL.h
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
   /opt
-  /boot/system/develop/headers #Haiku OS
+  /boot/system/develop/headers/SDL2 #Haiku
+  /boot/system/develop/headers/x86/SDL2 #Haiku x86
 )
 #MESSAGE("SDL2_INCLUDE_DIR is ${SDL2_INCLUDE_DIR}")
 
@@ -82,7 +83,8 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   /opt/local
   /opt/csw
   /opt
-  /system/lib #Hiaku OS
+  /system/lib #Haiku
+  /system/lib/x86 #Haiku x86
 )
 
 #MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
