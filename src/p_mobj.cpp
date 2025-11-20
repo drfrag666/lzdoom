@@ -5337,6 +5337,7 @@ bool CheckDoubleSpawn (AActor *&mobj, const AActor *info, const FMapThing *mthin
 		if (!P_CheckPosition (mobj, mobj->Pos(), false))
 		{
 			mobj->Destroy();
+			level.total_monsters--;
 			mobj = AActor::StaticSpawn (type, DVector3(mthing->pos.X + 2 * info->radius, mthing->pos.Y, sz), NO_REPLACE, true);
 		}
 		else return spawned;
@@ -5345,18 +5346,22 @@ bool CheckDoubleSpawn (AActor *&mobj, const AActor *info, const FMapThing *mthin
 	if (!P_CheckPosition (mobj, mobj->Pos(), false))
 	{
 		mobj->Destroy();
+		level.total_monsters--;
 		mobj = AActor::StaticSpawn (type, DVector3(mthing->pos.X - 2 * info->radius, mthing->pos.Y, sz), NO_REPLACE, true);
 		if (!P_CheckPosition (mobj, mobj->Pos(), false))
 		{
 			mobj->Destroy();
+			level.total_monsters--;
 			mobj = AActor::StaticSpawn (type, DVector3(mthing->pos.X, mthing->pos.Y + 2 * info->radius, sz), NO_REPLACE, true);
 			if (!P_CheckPosition (mobj, mobj->Pos(), false))
 			{
 				mobj->Destroy();
+				level.total_monsters--;
 				mobj = AActor::StaticSpawn (type, DVector3(mthing->pos.X, mthing->pos.Y - 2 * info->radius, sz), NO_REPLACE, true);
 				if (!P_CheckPosition (mobj, mobj->Pos(), false))
 				{
 					mobj->Destroy();
+					level.total_monsters--;
 					spawned = false;
 				}
 			}
