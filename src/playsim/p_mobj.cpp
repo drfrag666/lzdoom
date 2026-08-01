@@ -4509,11 +4509,6 @@ void AActor::Tick ()
 	{
 		int respawn_monsters = G_SkillProperty(SKILLP_Respawn);
 
-		if (MinRespawnTics > 0)
-			respawn_monsters = MinRespawnTics;
-		else if (MinRespawnTics < 0)
-			respawn_monsters = -MinRespawnTics * TICRATE;
-
 		// check for nightmare respawn
 		if (!(flags5 & MF5_ALWAYSRESPAWN))
 		{
@@ -4524,6 +4519,11 @@ void AActor::Tick ()
 			if (limit > 0 && skillrespawncount >= limit)
 				return;
 		}
+
+		if (MinRespawnTics > 0)
+			respawn_monsters = MinRespawnTics;
+		else if (MinRespawnTics < 0)
+			respawn_monsters = -MinRespawnTics * TICRATE;
 
 		movecount++;
 
