@@ -1511,6 +1511,17 @@ static int PatchThing (int thingy, int flags)
 			stripwhite(Line2);
 			info->StringVar(NAME_SelfObituary) = Line2;
 		}
+		else if (!stricmp(Line1, "Min respawn tics"))
+		{
+			info->MinRespawnTics = (int)val;
+		}
+		else if (!stricmp(Line1, "Respawn dice"))
+		{
+			if (val < 0)		val = 0;
+			else if (val > 255)	val = 255;
+
+			info->RespawnDice = (int)val;
+		}
 
 		else if (linelen > 6)
 		{
