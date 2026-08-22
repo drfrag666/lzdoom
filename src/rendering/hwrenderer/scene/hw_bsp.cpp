@@ -267,14 +267,19 @@ void HWDrawInfo::UnclipSubsector(subsector_t *sub)
 
 EXTERN_CVAR(Float, r_line_distance_cull)
 
-inline bool IsDistanceCulled(seg_t *line)
+bool HWDrawInfo::IsDistanceCulled(seg_t *line)
 {
 	double dist3 = r_line_distance_cull * r_line_distance_cull;
 	if (dist3 <= 0.0)
 		return false;
 
-	double dist1 = (line->v1->fPos() - r_viewpoint.Pos).LengthSquared();
-	double dist2 = (line->v2->fPos() - r_viewpoint.Pos).LengthSquared();
+	double dist1 = (line->v1->fPos() - Viewpoint.Pos).LengthSquared();
+	double dist2 = (line->v2->fPos() - Viewpoint.Pos).LengthSquared();
+	if (Viewpoint.bDoOob && r_radarclipper && !(Level->flags3 & LEVEL3_NOFOGOFWAR))
+	{
+		dist1 = (line->v1->fPos() - Viewpoint.OffPos).LengthSquared();
+		dist2 = (line->v2->fPos() - Viewpoint.OffPos).LengthSquared();
+	}
 	if ((dist1 > dist3) && (dist2 > dist3))
 		return true;
 	return false;
