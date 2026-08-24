@@ -57,11 +57,10 @@ CUSTOM_CVAR(Bool, ui_classic, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {
 	FString str = *self;
-	bool invalid = ui_classic && (!str.Compare("cs") || !str.Compare("da") || !str.Compare("de") || !str.Compare("eo") || !str.Compare("fi") || !str.Compare("jp")
-		|| !str.Compare("ko") || !str.Compare("nl") || !str.Compare("no") || !str.Compare("pl") || !str.Compare("ro") || !str.Compare("ru") || !str.Compare("sr")
-		|| !str.Compare("tr"));
+	bool invalid = ui_classic && (!str.Compare("jp") || !str.Compare("ko"));
 	if (invalid && str.Compare("auto")) self = "auto";
-	if (ui_classic && !str.Compare("tr")) self = "pt";
+	if (ui_classic && !str.Compare("jp")) self = "nl";
+	if (ui_classic && !str.Compare("ko")) self = "fi";
 	GStrings.UpdateLanguage(self);
 	UpdateGenericUI(ui_generic);
 	if (ui_classic)
