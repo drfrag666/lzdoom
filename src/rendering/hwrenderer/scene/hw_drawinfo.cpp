@@ -571,7 +571,9 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 		state.ClearDepthBias();
 	}
 
+	screen->mBones->Map();
 	drawlists[GLDL_MODELS].Draw(this, state, false);
+	screen->mBones->Unmap();
 
 	state.SetRenderStyle(STYLE_Translucent);
 
@@ -930,7 +932,9 @@ void HWDrawInfo::EndDrawScene(sector_t * viewsector, FRenderState &state)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		state.Clear(CT_Depth);
+		screen->mBones->Map();
 		DrawPlayerSprites(true, state);
+		screen->mBones->Unmap();
 	}
 
 	state.EnableStencil(false);
