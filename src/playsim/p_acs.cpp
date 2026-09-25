@@ -3636,7 +3636,8 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (tag == -1 || Level->SectorHasTag(actor->Sector, tag))
+				// Zero-tagged sectors must be handled differently, as they have no actual tags.
+				if (tag == -1 || (tag == 0 && !Level->SectorHasTags(actor->Sector)) || Level->SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (actor->IsMapActor())
@@ -3655,7 +3656,8 @@ do_count:
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				if (tag == -1 || Level->SectorHasTag(actor->Sector, tag))
+				// Zero-tagged sectors must be handled differently, as they have no actual tags.
+				if (tag == -1 || (tag == 0 && !Level->SectorHasTags(actor->Sector)) || Level->SectorHasTag(actor->Sector, tag))
 				{
 					// Don't count items in somebody's inventory
 					if (actor->IsMapActor())
