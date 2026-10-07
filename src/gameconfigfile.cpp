@@ -892,6 +892,11 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	ClearCurrentSection ();
 	C_ArchiveAliases (this);
 
+
+	Bindings.DoBindsBackup ();
+	DoubleBindings.DoBindsBackup ();
+	AutomapBindings.DoBindsBackup ();
+
 	M_SaveCustomKeys (this, section, subsection, sublen);
 
 	strcpy (subsection, "Bindings");
@@ -905,6 +910,10 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	strncpy (subsection, "AutomapBindings", sublen);
 	SetSection (section, true);
 	AutomapBindings.ArchiveBindings (this);
+
+	Bindings.RestoreBindsBackup ();
+	DoubleBindings.RestoreBindsBackup ();
+	AutomapBindings.RestoreBindsBackup ();
 }
 
 void FGameConfigFile::ArchiveGlobalData ()
